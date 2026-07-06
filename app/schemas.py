@@ -41,8 +41,8 @@ class ReadCreate(ReadBase):
 class ReadResponse(ReadBase):
   model_config = ConfigDict(from_attributes=True)
 
-  read_id: int
-  created_time: datetime
+  id: int
+  time_created: datetime
 
 
 # PATCH style update
@@ -54,8 +54,8 @@ class ReadUpdate(BaseModel):
 
 # BINDER SCHEMAS
 class BinderBase(BaseModel):
-  binder_name: str = Field(min_length=1, max_length=50)
-  binder_desc: str = Field(min_length=1, max_length=1500)
+  name: str = Field(min_length=1, max_length=100)
+  description: str = Field(min_length=1, max_length=1500)
   parent_id: int | None = Field(default=None)
 
 class BinderCreate(BinderBase):
@@ -64,13 +64,13 @@ class BinderCreate(BinderBase):
 class BinderResponse(BinderBase):
   model_config = ConfigDict(from_attributes=True)
 
-  binder_id: int
-  created_time: datetime
+  id: int
+  time_created: datetime
 
 # PATCH style update
 class BinderUpdate(BaseModel):
-  binder_name: str | None = Field(default=None, min_length=1, max_length=50)
-  binder_desc: str | None = Field(default=None, min_length=1, max_length=1500)
+  name: str | None = Field(default=None, min_length=1, max_length=100)
+  description: str | None = Field(default=None, min_length=1, max_length=1500)
   parent_id: int | None = Field(default=None)
 
 
