@@ -1,0 +1,6 @@
+
+# Virtual Environment Folder
+env/
+
+# .env file
+app/.env
