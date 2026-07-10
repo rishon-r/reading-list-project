@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 router = APIRouter()
 
 # ROUTES
+
+# CREATING A USER
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
   
@@ -57,6 +59,7 @@ async def create_user(user: UserCreate, db: Annotated[AsyncSession, Depends(get_
 
   return new_user
 
+# LOGIN FUNCTION
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
   form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -82,6 +85,83 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
   return Token(access_token=access_token, token_type="bearer")
+
+# READING/RETURNING CURRENTLY AUTHENTICATED USER
+@router.get("/me", response_model=UserPublic)
+async def get_current_user(user: CurrentUser):
+  return CurrentUser
+
+# UPDATING A USER
+@router.patch("/{user_id}", response_model=UserPrivate)
+async def update_user(user_id: int,
+                 updated_user: UserUpdate,
+                 current_user: CurrentUser,
+                 db: Annotated[AsyncSession, Depends(get_db)]
+                 ):
+  
+  # A user can only update themselves and not other random users
+  if current_user.id != user_id:
+    raise HTTPException(
+      status_code=status.HTTP_403_FORBIDDEN,
+      detail="NOt allows to update this user"
+    )
+  
+  # Checking if a user with the given id exists
+  result = await db.execute(select(models.User).where(models.User.id == user_id))
+  user = result.scalars().first()
+  if not user:
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="User not found",
+    )
+  
+  # Check if new username exists in database
+  if updated_user.username and user.username.lower()!=updated_user.username.lower():
+    result = await db.execute(
+        select(models.User)
+        .where(func.lower(models.User.username) == func.lower(updated_user.username))
+        )
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with new username already exists",
+        )
+
+  # Check if new email exists in database
+  if updated_user.email and user.email.lower()!=updated_user.email.lower():
+    result = await db.execute(
+        select(models.User)
+        .where(func.lower(models.User.email) == updated_user.email.lower())
+        )
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with new email already exists",
+        )
+    
+  # Updating username
+  if updated_user.username:
+    user.username = updated_user.username
+
+  # Updating email
+  if updated_user.email:
+    user.email = updated_user.email
+
+  await db.commit()
+  await db.refresh(user)
+
+  return user
+
+
+
+
+    
+  
+  
+
+  
 
 
 
