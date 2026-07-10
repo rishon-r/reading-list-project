@@ -5,3 +5,5 @@ pip install sqlalchemy
 pip install pyjwt
 pip install "pwdlib[argon2]"
 pip install pydantic-settings
+pip install aiosqlite
+pip instal greenlet

@@ -14,7 +14,7 @@ from database import engine, Base
 async def lifespan(_app: FastAPI):
   # Creating all tables (SETUP)
   async with engine.begin() as conn:
-    await conn.run_sync(Base.metadata.create_all())
+    await conn.run_sync(Base.metadata.create_all)
 
   yield
 
