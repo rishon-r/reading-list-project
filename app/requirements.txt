@@ -1,4 +1,7 @@
-pip install "fastapi[standard"
+Installations done after creating a virtual environment:
+
+pip install "fastapi[standard]"
+pip install sqlalchemy
 pip install pyjwt
 pip install "pwdlib[argon2]"
 pip install pydantic-settings
