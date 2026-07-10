@@ -1,0 +1,4 @@
+pip install "fastapi[standard"
+pip install pyjwt
+pip install "pwdlib[argon2]"
+pip install pydantic-settings
