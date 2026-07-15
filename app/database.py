@@ -7,7 +7,6 @@ SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./readinglist.db"
 # Creating the engine (connection to our database)
 engine = create_async_engine(
   SQLALCHEMY_DATABASE_URL,
-  connect_args={"check_same_thread": False}, # This is sqllite specific because sqlite allows only one thread while fastapi allows many (don't worry too much about this)
 )
 
 # Creating our session factory which creates sessions

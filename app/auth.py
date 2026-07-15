@@ -21,6 +21,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
   return password_hash.verify(plain_password, hashed_password) # Checks if plain password is same as hashed password
 
 def create_access_token(data: dict, expires_delta: timedelta | None):
+  # NOTE: `data` should contain {"sub": str(user.id)} — sub must be a string
+  # per the JWT spec. get_current_user() calls int(sub) after decoding, so
+  # passing a raw int here can cause inconsistent behavior across JWT libraries.
+  
   to_encode = data.copy()
 
   if expires_delta:
@@ -40,7 +44,7 @@ def verify_access_token(token: str) -> str | None:
     payload = jwt.decode(
       token,
       settings.secret_key.get_secret_value(),
-      algorithms=[settings.algorithms],
+      algorithms=[settings.algorithm],
       options={"require": ["exp", "sub"]}
       )
   except jwt.InvalidTokenError:
@@ -71,7 +75,7 @@ async def get_current_user(
       headers={"WWW-Authenticate": "Bearer"}
     )
   
-  result = await db.execute(select(models.User).where(models.User.user_id == user_id_int))
+  result = await db.execute(select(models.User).where(models.User.id == user_id_int))
 
   user = result.scalars().first()
 
