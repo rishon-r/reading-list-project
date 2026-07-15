@@ -3,7 +3,6 @@ from datetime import datetime
 
 # USER SCHEMAS
 class UserBase(BaseModel):
-  username: str = Field(min_length=6, max_length=50)
   email: EmailStr = Field(max_length=100) # EmailStr type will automatically perform a lot of the verification checks to see if it is valid email format
 
 # For user creation requests
@@ -15,7 +14,6 @@ class UserPublic(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 
   id: int
-  username: str
 
 # For responses seen by the user alone (email is visible here)
 class UserPrivate(UserPublic):
@@ -23,14 +21,14 @@ class UserPrivate(UserPublic):
 
 # For PATCH tyle user updates, PUT updates will typically just use UserCreate as it involves updating all fields
 class UserUpdate(BaseModel):
-  username: str | None = Field(default=None, min_length=6, max_length=50)
   email: EmailStr | None = Field(default=None, max_length=100)
 
 # READ SCHEMAS
+
+# Only the link is required at creation time — everything else
+# (title, description, author, etc.) is filled in later by the scraper.
 class ReadBase(BaseModel):
-  title: str = Field(min_length=1, max_length=100) # title of the article
   link: str = Field(min_length=1, max_length=2048) # url to the article
-  description: str = Field(min_length=1, max_length=1500) # description of what the article contains
   binder_id: int  # describes which binder this read belongs in
 
 # This is the schema for creating reads
@@ -42,29 +40,40 @@ class ReadResponse(ReadBase):
   model_config = ConfigDict(from_attributes=True)
 
   id: int
+  user_id: int
+  status: str
+  title: str | None
+  description: str | None
+  author: str | None
+  published_at: datetime | None
+  hero_image_url: str | None
+  content_html: str | None
+  reading_time_minutes: int | None
+  is_read: bool
+  failure_reason: str | None
   time_created: datetime
+  scraped_at: datetime | None
 
-
-# PATCH style update
+# PATCH-style update — only user-controlled fields.
+# title/description/author/etc. are scraper-owned and not user-editable.
 class ReadUpdate(BaseModel):
-  title: str | None = Field(default=None, min_length=1, max_length=100) # title of the article
-  link: str | None = Field(default=None, min_length=1, max_length=2048) # url to the article
-  description: str | None = Field(default=None, min_length=1, max_length=1500) # description of what the article contains
-  binder_id: int | None = Field(default=None)# describes which binder this read belongs in
+  is_read: bool | None = Field(default=None)
+  binder_id: int | None = Field(default=None)
 
 # BINDER SCHEMAS
 class BinderBase(BaseModel):
   name: str = Field(min_length=1, max_length=100)
-  description: str = Field(min_length=1, max_length=1500)
   parent_id: int | None = Field(default=None)
 
 class BinderCreate(BinderBase):
-  pass 
+  description: str | None = Field(default=None, min_length=1, max_length=1500)
 
 class BinderResponse(BinderBase):
   model_config = ConfigDict(from_attributes=True)
 
   id: int
+  user_id: int
+  description: str
   time_created: datetime
 
 # PATCH style update
