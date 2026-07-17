@@ -51,14 +51,36 @@ async def create_binder(new_binder: BinderCreate,
     return binder
 
 
-@router.get("/{binder_id}") # corresponds to "/api/binders/{binder_id}"
-def diplay_binder_by_id(user: CurrentUser,
+@router.get("/{binder_id}", response_model=BinderResponse) # corresponds to "/api/binders/{binder_id}"
+async def diplay_binder_by_id(user: CurrentUser,
                         db:Annotated[AsyncSession, Depends(get_db)],
                         binder_id: int):
-    pass
+    
+    result = await db.execute(
+        select(models.Binder)
+        .where(models.Binder.id == binder_id)
+    )
+    binder_response = result.scalars().first()
+
+    # If no binder with this id exists
+    if not binder_response:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Binder does not exist"
+        )
+    
+    # If aa binder with this id exists but it doesn't belong to the current user
+    if binder_response.user_id!=user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail= "Binder does not exist"
+        )
+    
+    return binder_response
 
 @router.patch("/{binder_id}") # corresponds to "/api/binders/{binder_id}"
 def update_binder_by_id(user: CurrentUser,
+                        updated_binder: BinderUpdate,
                         db:Annotated[AsyncSession, Depends(get_db)],
                         binder_id: int):
     pass
