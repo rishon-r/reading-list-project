@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from routers import binders, reads, users # Importing all router modules
-from fastapi import HTTPException, status, Request
+from routers import binders, reads, users # Importing all router modules from fastapi import HTTPException, status, Request
 
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -28,7 +27,7 @@ app = FastAPI(lifespan=lifespan) # App instance created
 # Including routers
 app.include_router(binders.router, prefix='/api/binders', tags=["binders"])
 app.include_router(reads.router, prefix='/api/reads', tags=["reads"])
-app.include_router(users.router, prefix='/api/users', tags=["users"])
+app.include_router(users.router, prefix='/api/auth', tags=["users"])
 
 # base route
 @app.get("/")

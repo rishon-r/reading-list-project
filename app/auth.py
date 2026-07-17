@@ -12,7 +12,7 @@ from database import get_db
 
 password_hash = PasswordHash.recommended() # Creates a password hash with argon2 using the recommended settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
 
 def hash_password(password: str) -> str:
   return password_hash.hash(password) # Returns Hashed password. Note: We never store plain passwords in database, only hashed ones
@@ -24,7 +24,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None):
   # NOTE: `data` should contain {"sub": str(user.id)} — sub must be a string
   # per the JWT spec. get_current_user() calls int(sub) after decoding, so
   # passing a raw int here can cause inconsistent behavior across JWT libraries.
-  
+
   to_encode = data.copy()
 
   if expires_delta:
