@@ -88,7 +88,7 @@ async def update_user(user_id: int,
   if current_user.id != user_id:
     raise HTTPException(
       status_code=status.HTTP_403_FORBIDDEN,
-      detail="NOt allows to update this user"
+      detail="Not allowed to update this user"
     )
   
   # Checking if a user with the given id exists

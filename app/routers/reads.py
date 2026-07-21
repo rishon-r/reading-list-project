@@ -93,6 +93,77 @@ async def get_read_by_id(
     return read
 
 # Update a particular read
-   
-        
+@router.patch("/{read_id}", response_model=ReadResponse) # corresponds to /api/reads/{read_id}
+async def update_read_by_id(
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    read_id: int,
+    updated_read: ReadUpdate
+):
+    result = await db.execute(
+        select(models.Read)
+        .where(
+            models.Read.user_id==user.id,
+            models.Read.id == read_id
+        )
+    )
+    existing_read = result.scalars().first()
+
+    if not existing_read:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Read to be updated doesn't exist"
+        )
+    
+    update_data = updated_read.model_dump(exclude_unset=True)
+
+    # Check to see if binder_id in update data belongs to the same user
+    # This is so that the user cannot move reads to binders that don't belong to them
+
+    if "binder_id" in update_data and update_data["binder_id"] is not None:
+        result = await db.execute(
+            select(models.Binder).where(
+                models.Binder.id == update_data["binder_id"],
+                models.Binder.user_id == user.id,
+            )
+        )
+        if not result.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Binder not found"
+            )
+            
+    # Updating
+    for field, value in update_data.items():
+        setattr(existing_read, field, value)
+
+    await db.commit()
+    await db.refresh(existing_read)
+
+    return existing_read
+    
+@router.delete("/{read_id}", status_code=status.HTTP_204_NO_CONTENT) # corresponds to /api/reads/{read_id} 
+async def delete_read_by_id(
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    read_id: int,
+):
+    
+    result = await db.execute(
+        select(models.Read)
+        .where(
+            models.Read.user_id==user.id,
+            models.Read.id == read_id
+        )
+    )
+    existing_read = result.scalars().first()
+
+    if not existing_read:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Read to be deleted doesn't exist"
+        )
+    
+    await db.delete(existing_read)
+    await db.commit()
     

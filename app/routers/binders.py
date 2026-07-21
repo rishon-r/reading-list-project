@@ -146,3 +146,4 @@ async def delete_binder_by_id(user: CurrentUser,
 
     await db.delete(existing_binder)
     await db.commit()
+
