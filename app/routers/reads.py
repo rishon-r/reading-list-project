@@ -68,5 +68,31 @@ async def display_all_reads(
 
     return reads
     
+# Get a particular read
+@router.get("/{read_id}", response_model=ReadResponse) # corresponds to /api/reads/{read_id}
+async def get_read_by_id(
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    read_id: int
+):
+    
+    result = await db.execute(
+        select(models.Read)
+        .where(models.Read.user_id == user.id,
+               models.Read.id == read_id)
+    )
 
+    read = result.scalars().first()
+
+    if not read:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail= "Read doesn't exist"
+        )
+    
+    return read
+
+# Update a particular read
+   
+        
     
