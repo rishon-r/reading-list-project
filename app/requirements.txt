@@ -7,3 +7,5 @@ pip install "pwdlib[argon2]"
 pip install pydantic-settings
 pip install aiosqlite
 pip instal greenlet
+pip install trafilatura
+pip install httpx
