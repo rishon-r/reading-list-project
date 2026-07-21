@@ -20,7 +20,7 @@ class Read(Base):
   __tablename__ = "reads"
 
   id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-  binder_id: Mapped[int] = mapped_column(ForeignKey("binders.id"), nullable=False, index=True)
+  binder_id: Mapped[int | None] = mapped_column(ForeignKey("binders.id"), nullable=True, index=True)
   user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
   link: Mapped[str] = mapped_column(Text, nullable=False)
   status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
@@ -37,7 +37,7 @@ class Read(Base):
   scraped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
   user: Mapped[User] = relationship(back_populates="reads")
-  binder: Mapped[Binder] = relationship(back_populates="reads")
+  binder: Mapped[Binder | None] = relationship(back_populates="reads")
 
   __table_args__ = (
     CheckConstraint("status IN ('pending','scraping','ready','failed')"),
@@ -48,7 +48,7 @@ class Binder(Base):
   __tablename__ = "binders"
 
   id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-  name: Mapped[str]= mapped_column(String(100), unique=True, nullable=False)
+  name: Mapped[str]= mapped_column(String(100), nullable=False)
   description: Mapped[str] = mapped_column(String(1500), default="No description")
   time_created: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 

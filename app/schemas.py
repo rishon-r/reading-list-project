@@ -29,7 +29,7 @@ class UserUpdate(BaseModel):
 # (title, description, author, etc.) is filled in later by the scraper.
 class ReadBase(BaseModel):
   link: str = Field(min_length=1, max_length=2048) # url to the article
-  binder_id: int  # describes which binder this read belongs in
+  binder_id: int | None = Field(default=None) # describes which binder this read belongs in
 
 # This is the schema for creating reads
 class ReadCreate(ReadBase):

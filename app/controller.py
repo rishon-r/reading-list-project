@@ -8,6 +8,7 @@ from fastapi.exception_handlers import http_exception_handler, request_validatio
 from contextlib import asynccontextmanager
 from database import engine, Base
 
+from fastapi import Request
 # For setup and teardown
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
