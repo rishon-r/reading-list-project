@@ -8,6 +8,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from scraper import scrape_url
 
 router = APIRouter()
 
@@ -21,38 +22,37 @@ async def create_read(
     if read_data.binder_id is not None:
         result = await db.execute(
             select(models.Binder)
-            .where(models.Binder.id == read_data.binder_id, 
-                   models.Binder.user_id==user.id)
-            )
+            .where(models.Binder.id == read_data.binder_id,
+                   models.Binder.user_id == user.id)
+        )
         existing_binder = result.scalars().first()
-
 
         if not existing_binder:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Binder not found"
             )
-        
+
+    scrape_result = await scrape_url(read_data.link)  # blocking for now — step 5 moves this to background
+
     new_read = models.Read(
         user_id=user.id,
         binder_id=read_data.binder_id,
-        link= read_data.link
-
+        link=read_data.link,
+        **scrape_result, # Using dictionary unpacking to get all key-value pairs in scrape_result
     )
 
     try:
         db.add(new_read)
         await db.commit()
         await db.refresh(new_read)
-
         return new_read
-    
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You've already saved this link"
-        )   
+        )
     
 # View all reads
 @router.get("", response_model=list[ReadResponse]) # corresponds to /api/reads
