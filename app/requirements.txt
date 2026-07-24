@@ -9,3 +9,5 @@ pip install aiosqlite
 pip instal greenlet
 pip install trafilatura
 pip install httpx
+pip install celery
+pip install redis
