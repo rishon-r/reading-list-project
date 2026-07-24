@@ -12,7 +12,7 @@ from database import get_db
 
 password_hash = PasswordHash.recommended() # Creates a password hash with argon2 using the recommended settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def hash_password(password: str) -> str:
   return password_hash.hash(password) # Returns Hashed password. Note: We never store plain passwords in database, only hashed ones
