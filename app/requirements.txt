@@ -11,3 +11,9 @@ pip install trafilatura
 pip install httpx
 pip install celery
 pip install redis
+pip install nh3
+
+System installations:
+
+brew install redis
+brew install celery

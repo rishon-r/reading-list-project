@@ -1,9 +1,34 @@
 import httpx
 import trafilatura
+import nh3 # for HTML sanitization
 from datetime import datetime, UTC
+import re
 
 USER_AGENT = "ReadItLaterBot/0.1 (personal project)"
 
+ALLOWED_TAGS = {
+    "p", "br", "strong", "em", "b", "i", "u",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "ul", "ol", "li",
+    "blockquote", "pre", "code",
+    "a", "img",
+    "table", "thead", "tbody", "tr", "th", "td",
+}
+
+ALLOWED_ATTRIBUTES = {
+    "a": {"href", "title"},
+    "img": {"src", "alt", "title"},
+}
+
+def sanitize_html(raw_html: str) -> str:
+    # The point of sanitizing html is to avoid malicious <script> tags that might cause inappropriate
+    # behaviour when the HTML is rendered on the client side
+    return nh3.clean(
+        raw_html,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        link_rel="noopener noreferrer",
+    )
 
 async def scrape_url(link: str) -> dict:
     """
@@ -52,6 +77,19 @@ async def scrape_url(link: str) -> dict:
             "status": "failed",
             "failure_reason": "Could not extract article content from this page",
         }
+    
+    # 3. Fix trafilatura's non-standard <graphic> tags before sanitizing,
+    # so nh3 doesn't just strip them outright (they aren't real HTML elements)
+    # re.sub(pattern, replacement, string) scans content_html for anything matching pattern
+    # and replaces each match with replacement
+    content_html = re.sub(
+        r'<graphic src="([^"]+)"\s*/?>',
+        r'<img src="\1" alt=""/>',
+        content_html,
+    )
+
+    # 4. Sanitize — mandatory before this content is ever stored/rendered
+    content_html = sanitize_html(content_html)
 
     # Extract metadata properties safely
     title = metadata.title if metadata else None
