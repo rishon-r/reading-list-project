@@ -72,7 +72,51 @@ async def create_read(
         await db.refresh(new_read)
 
     return new_read
+
+# Re-attempting a scrape
+@router.post("/{read_id}/retry", response_model=ReadResponse)
+async def retry_scrape(
+    read_id: int,
+    user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    results = await db.execute(
+        select(models.Read)
+        .where(models.Read.id == read_id, 
+               models.Read.user_id == user.id)
+    )
+    read = results.scalars().first()
+
+    # If the read to be rescraped doesn't belong to current user raise exception
+    if not read: 
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Read not found"
+        )
     
+    if read.status!="failed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Scrape has not failed"
+        )
+    
+    # Resetting read parameters before queueing it for a scrape again
+    read.status="pending"
+    read.failure_reason = None
+
+    await db.commit()
+    await db.refresh(read)
+
+    try:
+        scrape_read_task.delay(read.id)
+    except Exception as e:
+        read.status = "failed"
+        read.failure_reason = f"Could not queue scrape job: {e}"
+        await db.commit()
+        await db.refresh(read)
+
+    return read
+
 # View all reads
 @router.get("", response_model=list[ReadResponse]) # corresponds to /api/reads
 async def display_all_reads(
