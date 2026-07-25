@@ -12,8 +12,10 @@ pip install httpx
 pip install celery
 pip install redis
 pip install nh3
+pip install asyncpg
+pip install alembic
 
 System installations:
 
 brew install redis
-brew install celery
+brew install postgresql@16

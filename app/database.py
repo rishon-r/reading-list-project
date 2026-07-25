@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+from config import settings
 
-# Temporarily creating an sqlite database, will make this PostgreSQL later
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./readinglist.db" 
+# Modified to postgres
+SQLALCHEMY_DATABASE_URL = settings.database_url
 
 # Creating the engine (connection to our database)
 engine = create_async_engine(
