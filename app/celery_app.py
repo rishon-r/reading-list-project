@@ -20,6 +20,11 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+# Make sure the worker process actually loads this module,
+# so the task gets registered
+import tasks  # replace with whatever your task file is actually named
+
+
 '''
 HOW CELERY WORKS IN MY SYSTEM:
 

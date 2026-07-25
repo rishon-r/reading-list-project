@@ -41,7 +41,16 @@ async def _do_scrape(read_id: int):
         read.status = "scraping"
         await db.commit()
 
-        scrape_result = await scrape_url(read.link)
+        try:
+            scrape_result = await scrape_url(read.link)
+        except Exception as exc:
+            read.status = "failed"
+            read.failure_reason = f"Unexpected error during scrape: {exc}"
+            # optionally store the error message too, if your model has a field for it
+            # read.error_message = str(exc)
+            await db.commit()
+            raise  # re-raise so Celery still logs/marks the task as failed
+
 
         # Apply whatever scrape_url returned (status, title, content_html, etc.)
         for field, value in scrape_result.items():

@@ -8,7 +8,6 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from scraper import scrape_url
 from tasks import scrape_read_task
 
 router = APIRouter()
@@ -54,12 +53,23 @@ async def create_read(
             detail="You've already saved this link"
         )
     
-    # Kick off the scrape asynchronously — returns instantly, doesn't block this request
-    # Dispatches the Celery task (scrape_read_task — the one from your first snippet)
-    #  to run on a worker process, passing just the new row's id. .delay() is non-blocking:
-    #  it enqueues a message on the broker and returns immediately, without waiting for the 
-    # scrape to actually happen.
-    scrape_read_task.delay(new_read.id)
+    try:
+        # Kick off the scrape asynchronously — returns instantly, doesn't block this request
+        # Dispatches the Celery task (scrape_read_task — the one from your first snippet)
+        #  to run on a worker process, passing just the new row's id. .delay() is non-blocking:
+        #  it enqueues a message on the broker and returns immediately, without waiting for the 
+        # scrape to actually happen.
+        scrape_read_task.delay(new_read.id)
+
+    except Exception:
+        # Redis/broker unreachable. The read row already exists — rather than
+        # leaving it stuck at "pending" forever with no worker to pick it up,
+        # mark it failed immediately so the frontend can show something actionable
+        # (and the user can hit /retry once the broker's back up).
+        new_read.status = "failed"
+        new_read.failure_reason = "Could not queue scrape job — please try again"
+        await db.commit()
+        await db.refresh(new_read)
 
     return new_read
     
